@@ -5,9 +5,6 @@ const noteTitleInput = document.getElementById("noteTitle");
 const noteTextInput = document.getElementById("noteText");
 const saveNoteButton = document.getElementById("saveNote");
 
-// Create an array to store the notes
-let notes = [];
-
 // Function to update the note list
 function updateNoteList() {
   noteList.innerHTML = "";
@@ -45,6 +42,7 @@ function saveNote() {
 function clearNoteInputs() {
   noteTitleInput.value = "";
   noteTextInput.value = "";
+  saveNoteButton.style.display = "none";
 }
 
 // Event listeners
