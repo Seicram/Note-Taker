@@ -2,13 +2,23 @@
 <html>
 <head>
   <title>Note Taker</title>
+  <link rel="stylesheet" href="./public/assets/css/style.css">
 </head>
 <body>
-  <h1>Note Taker</h1>
-  <textarea id="noteInput" rows="4" cols="50"></textarea>
-  <button id="saveButton">Save Note</button>
-  <ul id="noteList"></ul>
+  <div class="container">
+    <div class="left-column">
+      <h1>Note Taker</h1>
+      <p><a href="#" id="viewNotes">View Notes</a></p>
+      <ul id="noteList"></ul>
+    </div>
+    <div class="right-column">
+      <h2>Note Details</h2>
+      <input type="text" id="noteTitle" placeholder="Note Title">
+      <textarea id="noteText" rows="4" cols="50" placeholder="Note Text"></textarea>
+      <button id="saveNote" style="display: none;">Save Note</button>
+    </div>
+  </div>
 
-  <script src="script.js"></script>
+  <script src="./public/assets/js/script.js"></script>
 </body>
 </html>

@@ -1,19 +1,30 @@
 {
   "name": "note-taker",
   "version": "1.0.0",
-  "description": "",
+  "description": "const inquirer = require('inquirer');\r const fs = require('fs');\r const path = require('path');",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Marcies Smith",
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.4",
     "bootstrap": "^5.2.3",
     "dotenv": "^16.0.3",
+    "epress": "^0.0.1-security",
     "express": "^4.18.2",
     "fs": "^0.0.1-security",
-    "util": "^0.12.5"
-  }
+    "util": "^0.12.5",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Seicram/Note-Taker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Seicram/Note-Taker/issues"
+  },
+  "homepage": "https://github.com/Seicram/Note-Taker#readme"
 }
