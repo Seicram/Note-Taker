@@ -45,7 +45,7 @@ function clearNoteInputs() {
   saveNoteButton.style.display = "none";
 }
 
-// Event listeners
+// Event listener for "View Notes" link
 viewNotesLink.addEventListener("click", () => {
   noteTitleInput.value = "";
   noteTextInput.value = "";
@@ -53,12 +53,15 @@ viewNotesLink.addEventListener("click", () => {
   updateNoteList();
 });
 
+// Event listeners for note inputs
 noteTitleInput.addEventListener("input", () => {
   saveNoteButton.style.display = "block";
 });
 
+// Event listeners for note inputs
 noteTextInput.addEventListener("input", () => {
   saveNoteButton.style.display = "block";
 });
 
+// Event listener for save note button
 saveNoteButton.addEventListener("click", saveNote);
