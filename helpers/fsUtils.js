@@ -1,8 +1,6 @@
-// helpers/fsUtils.js
+const fs = require('fs').promises;
 
-import fs from 'fs/promises';
-
-export const writeToFile = async (destination, content) => {
+const writeToFile = async (destination, content) => {
   try {
     await fs.writeFile(destination, JSON.stringify(content, null, 4));
     console.info(`Data written to ${destination}`);
@@ -12,7 +10,7 @@ export const writeToFile = async (destination, content) => {
   }
 };
 
-export const readFromFile = async (file) => {
+const readFromFile = async (file) => {
   try {
     const data = await fs.readFile(file, 'utf8');
     return JSON.parse(data);
@@ -22,7 +20,7 @@ export const readFromFile = async (file) => {
   }
 };
 
-export const appendToFile = async (file, content) => {
+const appendToFile = async (file, content) => {
   try {
     const existingData = await readFromFile(file);
     const newData = existingData ? [...existingData, content] : [content];
@@ -32,3 +30,5 @@ export const appendToFile = async (file, content) => {
     throw error;
   }
 };
+
+module.exports = { writeToFile, readFromFile, appendToFile };
