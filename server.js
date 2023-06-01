@@ -1,99 +1,30 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs').promises;
+const path = require('path');
+const api = require('./routes/index.js');
 
-const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(express.static('public'));
-app.use(express.urlencoded({ extended: true }));
+const app = express();
+
+// Middleware for parsing JSON and urlencoded form data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// API Routes
+app.use('/api', api);
 
-// Get all notes
-app.get('/api/notes', async (req, res) => {
-  try {
-    const data = await fs.readFile('./db/db.json', 'utf8');
-    const notes = JSON.parse(data);
-    res.json(notes);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+// Serve static files from the "public" directory
+app.use(express.static(path.resolve(__dirname, 'public')));
 
-// Save a new note
-app.post('/api/notes', async (req, res) => {
-  try {
-    const newNote = {
-      id: uuidv4(),
-      title: req.body.title,
-      text: req.body.text,
-    };
+// GET Route for notes file. This comes first since the asterik will catch everything else.
+app.get('/notes', (req, res) =>
+  res.sendFile(path.resolve(__dirname, 'public', 'notes.html'))
+);
 
-    const data = await fs.readFile('./db/db.json', 'utf8');
-    const notes = JSON.parse(data);
-    notes.push(newNote);
+// GET Route for "index.html" file. Catches everything other than /notes.
+app.get('*', (req, res) =>
+  res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
+);
 
-    await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
-    res.json(newNote);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete a note
-app.delete('/api/notes/:id', async (req, res) => {
-  try {
-    const data = await fs.readFile('./db/db.json', 'utf8');
-    let notes = JSON.parse(data);
-
-    notes = notes.filter((note) => note.id !== req.params.id);
-
-    await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
-    res.json({ message: 'Note deleted' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Restore a deleted note
-app.put('/api/notes/restore/:id', async (req, res) => {
-  try {
-    const dbData = await fs.readFile('./db/db.json', 'utf8');
-    const deletedData = await fs.readFile('./db/deleted.json', 'utf8');
-
-    const notes = JSON.parse(dbData);
-    const deletedNotes = JSON.parse(deletedData);
-
-    const restoredNote = deletedNotes.find((note) => note.id === req.params.id);
-
-    if (restoredNote) {
-      notes.push(restoredNote);
-      const filteredDeletedNotes = deletedNotes.filter((note) => note.id !== req.params.id);
-
-      await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
-      await fs.writeFile('./db/deleted.json', JSON.stringify(filteredDeletedNotes, null, 4));
-
-      res.json({ message: 'Note restored' });
-    } else {
-      res.status(404).json({ error: 'Note not found in deleted notes' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.get('/favicon.ico', (req, res) => {
-  res.status(204).end();
-});
-
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`App listening at http://localhost:${PORT} 🚀`)
+);
