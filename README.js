@@ -17,7 +17,9 @@ const fileExtensions = [
   { extension: '.node', description: 'Node' },
   { extension: '.java', description: 'Java' },
   { extension: '.py', description: 'Python' },
-  { extension: '.c', description: 'C' }
+  { extension: '.c', description: 'C' },
+  {extension: '.handlebars', description: 'Handlebars'},
+
 ];
 
 
@@ -35,6 +37,7 @@ const dictionary = {
   sequelize: 'a promise-based Node.js ORM for Postgres, MySQL, MariaDB, SQLite, and Microsoft SQL Server',
   json: 'JavaScript Object Notation, a lightweight data-interchange format',
   express: 'a fast, unopinionated, minimalist web framework for Node.js',
+  handlebars: 'a templating language for HTML',
 };
 
 const filesInFolder = [
@@ -47,6 +50,7 @@ const filesInFolder = [
   'jsonwebtoken',
   'sequelize',
   'express',
+  'handlebars',
   // Add more basic packages here
 ];
 
@@ -80,6 +84,7 @@ function generateSynopsis(fileType) {
     Java: 'This project includes a Java file that defines the project dependencies.',
     Python: 'This project includes a Python file that defines the project dependencies.',
     C: 'This project includes a C file that defines the project dependencies.',
+    Handlebars: 'This project includes a Handlebars file that defines the project dependencies.',
     
   };
 
@@ -118,31 +123,55 @@ function generateDescription(title, fileTypes) {
 function generateUsageSynopsis(title, description, fileExtensions) {
   const usageSynopsis = `The "${title}" project offers a practical application of web development skills and techniques. It provides a combination of files to create a fully functional web page. This project is designed to showcase different aspects of web development, including HTML, CSS, and JavaScript. By examining the files included in this project, developers can gain insights into structuring web pages, styling them with CSS, and enhancing interactivity with JavaScript. The project's files cover a range of common web page components and features, such as headers, footers, navigation menus, forms, and image galleries. Each file is organized and labeled appropriately, making it easy to understand its purpose and role in the overall project. By exploring these files, developers can learn best practices for organizing their own web development projects and gain inspiration for their own designs. The usage table below provides a comprehensive overview of the file types included in the project, along with brief descriptions for each file type.`;
 
+  const fs = require('fs');
+  const path = require('path');
+  
+  function readFolder(folderPath) {
+    const filesInFolder = fs.readdirSync(folderPath);
+  
+    let extensionsInFolder = [];
+  
+    filesInFolder.forEach((file) => {
+      const filePath = path.join(folderPath, file);
+      const fileStat = fs.statSync(filePath);
+  
+      if (fileStat.isDirectory()) {
+        // Recursively read subfolder
+        extensionsInFolder = extensionsInFolder.concat(readFolder(filePath));
+      } else {
+        const fileExtension = path.extname(file);
+        extensionsInFolder.push(fileExtension);
+      }
+    });
+  
+    return extensionsInFolder;
+  }
+  
   const folderPath = __dirname;
-  const filesInFolder = fs.readdirSync(folderPath);
-
-  const extensionsInFolder = filesInFolder.map(file => path.extname(file)); // Get only the extensions of the files
-
+  const extensionsInFolder = readFolder(folderPath);
+  
   const uniqueExtensions = [...new Set(extensionsInFolder)]; // Remove duplicate extensions
-
+  
   let usageTable = `The following table provides an overview of the files included in the project:\n\n`;
   usageTable += `| File Type | Description |\n`;
   usageTable += `| --- | --- |\n`;
-
+  
   uniqueExtensions.forEach((extension) => {
-    const fileType = fileExtensions.find(file => file.extension === extension); // Find the file type based on the extension
+    const fileType = fileExtensions.find((file) => file.extension === extension); // Find the file type based on the extension
     if (fileType) {
       const fileDescription = generateSynopsis(fileType.description);
       usageTable += `| ${extension} | ${fileDescription} |\n`;
     }
   });
-
+  
   if (uniqueExtensions.length === 0) {
     return `${usageSynopsis} No files detected in the folder.`;
   }
-
+  
   return `${usageSynopsis}\n${usageTable}`;
+
 }
+  
 
 function detectInstallationInstructions(fileExtensions, filesInFolder) {
   let installationTable = `The following table provides an overview of the files included in the project:\n\n`;
@@ -152,15 +181,41 @@ function detectInstallationInstructions(fileExtensions, filesInFolder) {
   fileExtensions.forEach((fileType) => {
     const extension = fileType.extension;
     const fileDescription = generateSynopsis(fileType.description);
-    const isFileIncluded = filesInFolder.some((file) => path.extname(file) === extension);
+    const isFileIncluded = filesInFolder.some((file) => {
+      const fileName = file.substring(file.lastIndexOf('/') + 1); // Extract file name from path
+      const fileExtension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase(); // Extract file extension
+      return fileExtension === extension;
+    });
 
     if (isFileIncluded) {
       let installationInstructions;
 
-      if (extension === '.js' || extension === '.css' || extension === '.html' || extension === '.md') {
+      if (extension === '.js' || extension === '.css' || extension === '.html' || extension === '.handlebars' || extension === '.md' || extension === '.txt' || extension === '.sql') {
         installationInstructions = `Create the file "${extension}" in the folder using the file extension.`;
+      } else if (extension === '.json' && filesInFolder.includes('package.json')) {
+        // Read package.json to get installed packages
+        const packageJsonPath = path.join(__dirname, 'package.json');
+        const packageJsonContent = getFileContent(packageJsonPath);
+        const packageJsonData = JSON.parse(packageJsonContent);
+
+        // Check dependencies and devDependencies for installed packages
+        const dependencies = packageJsonData.dependencies || {};
+        const devDependencies = packageJsonData.devDependencies || {};
+
+        const installedPackages = [...Object.keys(dependencies), ...Object.keys(devDependencies)];
+
+        const npmPackages = installedPackages.filter((packageName) => packageName.startsWith('@') || packageName === fileType.description);
+
+        if (npmPackages.length > 0) {
+          installationInstructions = `Install the following packages using npm install:\n\n`;
+          npmPackages.forEach((packageName) => {
+            installationInstructions += `- ${packageName}\n`;
+          });
+        } else {
+          installationInstructions = `No npm packages detected.`;
+        }
       } else {
-        installationInstructions = `Install the package using npm install.`;
+        installationInstructions = `No installation instructions available.`;
       }
 
       installationTable += `| ${extension} | ${fileDescription} | ${installationInstructions} |\n`;
@@ -172,6 +227,13 @@ function detectInstallationInstructions(fileExtensions, filesInFolder) {
   }
   return installationTable;
 }
+
+
+
+
+
+
+
 
 async function promptUser() {
   return inquirer.prompt([
@@ -196,7 +258,7 @@ async function promptUser() {
       message: 'Enter the video link for your project:',
     },
   ]).then((answers) => {
-    answers.fileTypes = ['HTML', 'CSS', 'JavaScript', 'SQL', 'Json', 'Express', 'Markdown', 'Text', 'Gitignore', 'Git', 'NPM', 'Node', 'Java', 'Python', 'C'];
+    answers.fileTypes = ['HTML', 'CSS', 'JavaScript', 'SQL', 'Json', 'Express', 'Markdown', 'Text', 'Gitignore', 'Git', 'NPM', 'Node', 'Java', 'Python', 'C', 'Handlebars'];
     answers.license = 'UNC Coding Boot Camp - UNC-Chapel Hill';
     return answers;
   });
@@ -244,7 +306,7 @@ async function generateReadme() {
 
   readmeContent += `\n## Credits\n\n`;
 
-  readmeContent += `This project was developed by Marcies Smith. Special thanks to John Doe for contributing to the project.\n`;
+  readmeContent += `This project was developed by Marcies Smith.\n`;
 
   if (github || deployment || video) {
     readmeContent += `\n## Links\n\n`;

@@ -1,58 +1,30 @@
 const express = require('express');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const api = require('./index.js');
+
+const PORT = process.env.PORT || 3001;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const dbFilePath = path.join(__dirname, 'public', 'db.json');
-const publicFolderPath = path.join(__dirname, 'public');
 
-app.use(express.urlencoded({ extended: true }));
+// Middleware for parsing JSON and urlencoded form data
 app.use(express.json());
-app.use(express.static(publicFolderPath));
+app.use(express.urlencoded({ extended: true }));
 
-// Route to the home page
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(publicFolderPath, 'notes.html'));
-});
+app.use('/api', api);
 
-// Route to get all notes from the database
-app.get('/notes', (_req, res) => {
-  fs.readFile(dbFilePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read notes.' });
-    }
-    const notes = JSON.parse(data);
-    res.json(notes);
-  });
-});
+// Serve static files from the "public" directory
+app.use(express.static(path.resolve(__dirname, 'public')));
 
-// Route to save a new note
-app.post('/notes', (req, res) => {
-  const newNote = req.body;
-  newNote.id = uuidv4();
+// GET Route for notes file. This comes first since the asterik will catch everything else.
+app.get('/notes', (req, res) =>
+  res.sendFile(path.resolve(__dirname, 'public', 'notes.html'))
+);
 
-  fs.readFile(dbFilePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read notes.' });
-    }
+// GET Route for "index.html" file. Catches everything other than /notes.
+app.get('*', (req, res) =>
+  res.sendFile(path.resolve(__dirname, 'public', 'index.html'))
+);
 
-    const notes = JSON.parse(data);
-    notes.push(newNote);
-
-    fs.writeFile(dbFilePath, JSON.stringify(notes), (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Failed to save note.' });
-      }
-      res.json(newNote);
-    });
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`App listening at http://localhost:${PORT} 🚀`)
+);
