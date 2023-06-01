@@ -3,8 +3,7 @@ function initNoteApp() {
   const noteText = document.querySelector('.note-textarea');
   const saveNoteBtn = document.querySelector('.save-note');
   const newNoteBtn = document.querySelector('.new-note');
-  const noteList = document.querySelector('.note-list');
-  const trashList = document.querySelector('.trash-list');
+  const noteList = document.querySelector('.list-group');
 
   const show = (elem) => {
     elem.style.display = 'inline';
@@ -22,7 +21,7 @@ function initNoteApp() {
       headers: {
         'Content-Type': 'application/json',
       },
-    });
+    }).then((response) => response.json());
 
   const saveNote = (note) =>
     fetch('/api/notes', {
@@ -31,6 +30,9 @@ function initNoteApp() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(note),
+    }).then(() => {
+      getAndRenderNotes();
+      renderActiveNote();
     });
 
   const deleteNote = (id) =>
@@ -39,6 +41,9 @@ function initNoteApp() {
       headers: {
         'Content-Type': 'application/json',
       },
+    }).then(() => {
+      getAndRenderNotes();
+      renderActiveNote();
     });
 
   const restoreNote = (id) =>
@@ -47,6 +52,9 @@ function initNoteApp() {
       headers: {
         'Content-Type': 'application/json',
       },
+    }).then(() => {
+      getAndRenderNotes();
+      renderActiveNote();
     });
 
   const renderActiveNote = () => {
@@ -70,10 +78,21 @@ function initNoteApp() {
       title: noteTitle.value,
       text: noteText.value,
     };
-    saveNote(newNote).then(() => {
-      getAndRenderNotes();
-      renderActiveNote();
-    });
+
+    saveNoteBtn.disabled = true;
+    saveNoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    saveNote(newNote)
+      .then(() => {
+        noteTitle.focus();
+        saveNoteBtn.disabled = false;
+        saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+      })
+      .catch((error) => {
+        console.error(error);
+        saveNoteBtn.disabled = false;
+        saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+      });
   };
 
   const handleNoteDelete = (e) => {
@@ -85,10 +104,7 @@ function initNoteApp() {
       activeNote = {};
     }
 
-    deleteNote(noteId).then(() => {
-      getAndRenderNotes();
-      renderActiveNote();
-    });
+    deleteNote(noteId);
   };
 
   const handleNoteRestore = (e) => {
@@ -96,77 +112,78 @@ function initNoteApp() {
     const note = e.target.parentElement;
     const noteId = note.dataset.noteId;
 
-    restoreNote(noteId).then(() => {
-      getAndRenderNotes();
-      renderActiveNote();
-    });
+    restoreNote(noteId);
   };
 
   const handleNoteView = (e) => {
     e.preventDefault();
     const dataset = e.target.dataset;
     const noteId = dataset.noteId || dataset.trashNoteId;
-    const title = e.target.innerText;
+    const title = e.target.innerHTML;
 
     activeNote = {
       id: noteId,
       title: title,
       text: '',
-      isTrashed: !!dataset.trashNoteId,
     };
 
     renderActiveNote();
   };
+
+  const renderNoteList = (notes) => {
+    noteList.innerHTML = '';
+
+    if (notes.length === 0) {
+      const emptyMessage = document.createElement('li');
+      emptyMessage.classList.add('list-group-item', 'text-center');
+      emptyMessage.textContent = 'No notes found.';
+      noteList.appendChild(emptyMessage);
+    } else {
+      notes.forEach((note) => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('list-group-item');
+        listItem.dataset.noteId = note.id;
+
+        const noteTitle = document.createElement('h5');
+        noteTitle.classList.add('mb-1');
+        noteTitle.textContent = note.title;
+        listItem.appendChild(noteTitle);
+
+        const noteText = document.createElement('p');
+        noteText.classList.add('mb-1', 'note-preview');
+        noteText.textContent = note.text.length > 50 ? note.text.slice(0, 50) + '...' : note.text;
+        listItem.appendChild(noteText);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('btn', 'btn-danger', 'float-right', 'delete-note');
+        deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteButton.addEventListener('click', handleNoteDelete);
+        listItem.appendChild(deleteButton);
+
+        noteList.appendChild(listItem);
+      });
+    }
+  };
+
+  const getAndRenderNotes = () => getNotes().then(renderNoteList);
 
   const handleNewNoteView = () => {
     activeNote = {};
     renderActiveNote();
   };
 
-  const handleRenderSaveBtn = () => {
-    if (!noteTitle.value.trim() || !noteText.value.trim()) {
-      hide(saveNoteBtn);
-    } else {
-      show(saveNoteBtn);
+  saveNoteBtn.addEventListener('click', handleNoteSave);
+  newNoteBtn.addEventListener('click', handleNewNoteView);
+
+  noteList.addEventListener('click', (e) => {
+    if (e.target.matches('.list-group-item')) {
+      handleNoteView(e);
+    } else if (e.target.matches('.delete-note')) {
+      handleNoteDelete(e);
+    } else if (e.target.matches('.restore-note')) {
+      handleNoteRestore(e);
     }
-  };
-
-  const renderNoteList = (notes, isTrash = false) => {
-    const targetList = isTrash ? trashList : noteList;
-    targetList.innerHTML = '';
-
-    if (notes.length === 0) {
-      const noNotesHtml = `<li class="list-group-item">${isTrash ? 'No notes in trash' : 'No saved notes'}</li>`;
-      targetList.innerHTML = noNotesHtml;
-    } else {
-      notes.forEach((note) => {
-        const listItemHtml = `
-          <li class="list-group-item">
-            <span class="list-item-title" data-note-id="${note.id}" data-trash-note-id="${note.id}">${note.title}</span>
-            <i class="fas fa-trash-alt float-right text-danger delete-note"></i>
-          </li>`;
-        targetList.insertAdjacentHTML('beforeend', listItemHtml);
-      });
-    }
-  };
-
-  const getAndRenderNotes = () => {
-    getNotes()
-      .then((response) => response.json())
-      .then((data) => {
-        const notes = data.filter((note) => !note.isTrashed);
-        const trashNotes = data.filter((note) => note.isTrashed);
-        renderNoteList(notes);
-        renderNoteList(trashNotes, true);
-      });
-  };
-
-  if (window.location.pathname === '/notes') {
-    saveNoteBtn.addEventListener('click', handleNoteSave);
-    newNoteBtn.addEventListener('click', handleNewNoteView);
-    noteTitle.addEventListener('keyup', handleRenderSaveBtn);
-    noteText.addEventListener('keyup', handleRenderSaveBtn);
-  }
+  });
 
   getAndRenderNotes();
 }
