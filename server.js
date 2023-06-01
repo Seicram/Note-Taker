@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { writeToFile, readFromFile, appendToFile } = require('./fileSystem');
+const fs = require('fs').promises;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,8 @@ app.use(express.json());
 // Get all notes
 app.get('/api/notes', async (req, res) => {
   try {
-    const notes = await readFromFile('./db/db.json');
+    const data = await fs.readFile('./db/db.json', 'utf8');
+    const notes = JSON.parse(data);
     res.json(notes);
   } catch (error) {
     console.error(error);
@@ -31,7 +32,12 @@ app.post('/api/notes', async (req, res) => {
       title: req.body.title,
       text: req.body.text,
     };
-    await appendToFile('./db/db.json', newNote);
+
+    const data = await fs.readFile('./db/db.json', 'utf8');
+    const notes = JSON.parse(data);
+    notes.push(newNote);
+
+    await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
     res.json(newNote);
   } catch (error) {
     console.error(error);
@@ -42,9 +48,12 @@ app.post('/api/notes', async (req, res) => {
 // Delete a note
 app.delete('/api/notes/:id', async (req, res) => {
   try {
-    const notes = await readFromFile('./db/db.json');
-    const filteredNotes = notes.filter((note) => note.id !== req.params.id);
-    await writeToFile('./db/db.json', filteredNotes);
+    const data = await fs.readFile('./db/db.json', 'utf8');
+    let notes = JSON.parse(data);
+
+    notes = notes.filter((note) => note.id !== req.params.id);
+
+    await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
     res.json({ message: 'Note deleted' });
   } catch (error) {
     console.error(error);
@@ -55,16 +64,20 @@ app.delete('/api/notes/:id', async (req, res) => {
 // Restore a deleted note
 app.put('/api/notes/restore/:id', async (req, res) => {
   try {
-    const deletedNotes = await readFromFile('./db/deleted.json');
+    const dbData = await fs.readFile('./db/db.json', 'utf8');
+    const deletedData = await fs.readFile('./db/deleted.json', 'utf8');
+
+    const notes = JSON.parse(dbData);
+    const deletedNotes = JSON.parse(deletedData);
+
     const restoredNote = deletedNotes.find((note) => note.id === req.params.id);
 
     if (restoredNote) {
-      const notes = await readFromFile('./db/db.json');
-      const updatedNotes = [...notes, restoredNote];
-      await writeToFile('./db/db.json', updatedNotes);
-
+      notes.push(restoredNote);
       const filteredDeletedNotes = deletedNotes.filter((note) => note.id !== req.params.id);
-      await writeToFile('./db/deleted.json', filteredDeletedNotes);
+
+      await fs.writeFile('./db/db.json', JSON.stringify(notes, null, 4));
+      await fs.writeFile('./db/deleted.json', JSON.stringify(filteredDeletedNotes, null, 4));
 
       res.json({ message: 'Note restored' });
     } else {
