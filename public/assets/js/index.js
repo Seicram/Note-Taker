@@ -1,52 +1,69 @@
+// Event listener for the "Get Started" button
+const getStartedBtn = document.querySelector('#get-started-btn');
+getStartedBtn.addEventListener('click', () => {
+  document.getElementById('landing-page').style.display = 'none';
+  document.getElementById('note-taker-page').style.display = 'block';
+});
+
+// Note Taker page elements
 const noteTitleInput = document.querySelector('.note-title');
 const noteTextInput = document.querySelector('.note-textarea');
 const saveNoteBtn = document.querySelector('.save-note');
 const newNoteBtn = document.querySelector('.new-note');
 const noteList = document.querySelector('.list-group');
 
-let activeNote = {};
+let activeNote = null;
 
+// Fetch notes from the server and render them
 const getAndRenderNotes = () => {
-  return getNotes()
+  getNotes()
     .then((notes) => renderNoteList(notes))
     .catch((error) => console.error(error));
 };
 
+// Render the list of notes
 const renderNoteList = (notes) => {
   noteList.innerHTML = '';
 
-  const noteItems = notes.map((note) => {
-    const noteItem = document.createElement('li');
-    noteItem.classList.add('list-group-item');
-    noteItem.setAttribute('data-note-id', note.id);
-
-    const noteTitle = document.createElement('h5');
-    noteTitle.classList.add('note-title');
-    noteTitle.textContent = note.title || 'Untitled';
-
-    const noteText = document.createElement('p');
-    noteText.classList.add('note-text');
-    noteText.textContent = note.text || '';
-
-    noteItem.appendChild(noteTitle);
-    noteItem.appendChild(noteText);
-
-    return noteItem;
+  notes.forEach((note) => {
+    const noteItem = createNoteListItem(note);
+    noteList.appendChild(noteItem);
   });
-
-  noteList.append(...noteItems);
 };
 
-const getNotes = () =>
-  fetch('/api/notes')
+// Create a list item for a note
+const createNoteListItem = (note) => {
+  const noteItem = document.createElement('li');
+  noteItem.classList.add('list-group-item');
+  noteItem.setAttribute('data-note-id', note.id);
+
+  const noteTitle = document.createElement('h5');
+  noteTitle.classList.add('note-title');
+  noteTitle.textContent = note.title || 'Untitled';
+
+  const noteText = document.createElement('p');
+  noteText.classList.add('note-text');
+  noteText.textContent = note.text || '';
+
+  noteItem.appendChild(noteTitle);
+  noteItem.appendChild(noteText);
+
+  return noteItem;
+};
+
+// Fetch notes from the server
+const getNotes = () => {
+  return fetch('/api/notes')
     .then((response) => response.json())
     .catch((error) => {
       console.error(error);
       return [];
     });
+};
 
-const saveNote = (note) =>
-  fetch('/api/notes', {
+// Save a note to the server
+const saveNote = (note) => {
+  return fetch('/api/notes', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,26 +72,38 @@ const saveNote = (note) =>
   })
     .then((response) => response.json())
     .catch((error) => console.error(error));
+};
 
-const deleteNote = (noteId) =>
-  fetch(`/api/notes/${noteId}`, {
+// Delete a note from the server
+const deleteNote = (noteId) => {
+  return fetch(`/api/notes/${noteId}`, {
     method: 'DELETE',
   })
     .then((response) => response.json())
     .catch((error) => console.error(error));
+};
 
-const restoreNote = (noteId) =>
-  fetch(`/api/notes/restore/${noteId}`, {
+// Restore a note on the server
+const restoreNote = (noteId) => {
+  return fetch(`/api/notes/restore/${noteId}`, {
     method: 'PUT',
   })
     .then((response) => response.json())
     .catch((error) => console.error(error));
-
-const renderActiveNote = () => {
-  noteTitleInput.value = activeNote.title || '';
-  noteTextInput.value = activeNote.text || '';
 };
 
+// Render the active note in the input fields
+const renderActiveNote = () => {
+  if (activeNote) {
+    noteTitleInput.value = activeNote.title || '';
+    noteTextInput.value = activeNote.text || '';
+  } else {
+    noteTitleInput.value = '';
+    noteTextInput.value = '';
+  }
+};
+
+// Save the note when the save button is clicked
 const handleNoteSave = () => {
   const noteTitle = noteTitleInput.value.trim();
   const noteText = noteTextInput.value.trim();
@@ -87,9 +116,7 @@ const handleNoteSave = () => {
 
     saveNote(newNote)
       .then(() => {
-        activeNote = {};
-        noteTitleInput.value = '';
-        noteTextInput.value = '';
+        activeNote = null;
         getAndRenderNotes();
         renderActiveNote();
       })
@@ -97,20 +124,20 @@ const handleNoteSave = () => {
   }
 };
 
+// Delete a note when the delete button is clicked
 const handleNoteDelete = (e) => {
   const noteId = e.target.parentElement.dataset.noteId;
 
   deleteNote(noteId)
     .then(() => {
-      activeNote = {};
-      noteTitleInput.value = '';
-      noteTextInput.value = '';
+      activeNote = null;
       getAndRenderNotes();
       renderActiveNote();
     })
     .catch((error) => console.error(error));
 };
 
+// Restore a note when the restore button is clicked
 const handleNoteRestore = (e) => {
   const noteId = e.target.parentElement.dataset.noteId;
 
@@ -122,22 +149,31 @@ const handleNoteRestore = (e) => {
     .catch((error) => console.error(error));
 };
 
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  getAndRenderNotes();
+  renderActiveNote();
+});
+
 saveNoteBtn.addEventListener('click', handleNoteSave);
+
 newNoteBtn.addEventListener('click', () => {
-  activeNote = {};
-  noteTitleInput.value = '';
-  noteTextInput.value = '';
+  activeNote = null;
   renderActiveNote();
 });
 
 noteList.addEventListener('click', (e) => {
   if (e.target.matches('li')) {
     const noteId = e.target.dataset.noteId;
+    const noteTitle = e.target.querySelector('.note-title').textContent;
+    const noteText = e.target.querySelector('.note-text').textContent;
+
     activeNote = {
       id: noteId,
-      title: e.target.querySelector('.note-title').textContent,
-      text: e.target.querySelector('.note-text').textContent,
+      title: noteTitle,
+      text: noteText,
     };
+
     renderActiveNote();
   } else if (e.target.matches('.delete-note')) {
     handleNoteDelete(e);
@@ -145,10 +181,3 @@ noteList.addEventListener('click', (e) => {
     handleNoteRestore(e);
   }
 });
-
-const initNoteApp = () => {
-  getAndRenderNotes();
-  renderActiveNote();
-};
-
-initNoteApp();

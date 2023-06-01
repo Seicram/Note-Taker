@@ -4,7 +4,7 @@ const uuid = require('../helpers/uuid');
 
 // GET Route for retrieving all the notes
 notes.get('/', (req, res) =>
-  readFromFile('./db/db.json').then((data) => res.json(JSON.parse(data)))
+  readFromFile('../db/db.json').then((data) => res.json(JSON.parse(data)))
 );
 
 // POST Route for adding notes
@@ -24,7 +24,7 @@ notes.post('/', (req, res) => {
         id: uuid(),
       };
   
-      readAndAppend(newFeedback, './db/db.json');
+      readAndAppend(newFeedback, '../db/db.json');
   
       const response = {
         status: 'success',
