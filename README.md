@@ -5,6 +5,7 @@
 - [Usage](#usage)
 - [Installation](#installation)
 - [Credits](#credits)
+- [Links](#links)
 - [License](#license)
 
 ## Description
@@ -40,6 +41,12 @@ The following table provides an overview of the files included in the project:
 ## Credits
 
 This project was developed by Marcies Smith.
+
+## Links
+
+- [GitHub Repository](vfdgfdfddgddfb)
+- [Deployed Application](dsfsf)
+- [Demo Video](sfddsf)
 
 ## License
 
