@@ -1,34 +1,39 @@
 const fs = require('fs').promises;
+const util = require('util');
 
-const writeToFile = async (destination, content) => {
-  try {
-    await fs.writeFile(destination, JSON.stringify(content, null, 4));
-    console.info(`Data written to ${destination}`);
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 const readFromFile = async (file) => {
   try {
-    const data = await fs.readFile(file, 'utf8');
-    return JSON.parse(data);
+    const data = await readFile(file, 'utf8');
+    return data;
   } catch (error) {
     console.error(error);
     throw error;
   }
 };
 
-const appendToFile = async (file, content) => {
+const writeToFile = async (file, content) => {
+  try {
+    await writeFile(file, JSON.stringify(content, null, 2));
+    console.info(`Data written to ${file}`);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+const readAndAppend = async (file, content) => {
   try {
     const existingData = await readFromFile(file);
-    const newData = existingData ? [...existingData, content] : [content];
-    await writeToFile(file, newData);
+    const parsedData = JSON.parse(existingData);
+    parsedData.push(content);
+    await writeToFile(file, parsedData);
   } catch (error) {
     console.error(error);
     throw error;
   }
 };
 
-module.exports = { writeToFile, readFromFile, appendToFile };
+module.exports = { readFromFile, writeToFile, readAndAppend };
