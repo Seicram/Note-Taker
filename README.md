@@ -21,8 +21,8 @@ The following table provides an overview of the files included in the project:
 | File Type | Description |
 | --- | --- |
 | .json |  |
-| .js | This project includes JavaScript files that provide the interactive functionality of the web page. |
 | .md | This project includes a Markdown file that provides documentation. |
+| .js | This project includes JavaScript files that provide the interactive functionality of the web page. |
 | .css | This project includes a CSS file that defines the styles and layout of the web page. |
 | .html | This project includes an HTML file that represents the web page. |
 
@@ -35,6 +35,7 @@ The following table provides an overview of the files included in the project:
 | --- | --- | --- |
 | .js | This project includes JavaScript files that provide the interactive functionality of the web page. | Create the file ".js" in the folder using the file extension. |
 | .json |  | No npm packages detected. |
+| .md | This project includes a Markdown file that provides documentation. | Create the file ".md" in the folder using the file extension. |
 | .gitignore | This project includes a Gitignore file that specifies which files to ignore. | No installation instructions available. |
 | .git | This project includes a Git file that provides version control. | No installation instructions available. |
 
@@ -44,9 +45,8 @@ This project was developed by Marcies Smith.
 
 ## Links
 
-- [GitHub Repository](vfdgfdfddgddfb)
-- [Deployed Application](dsfsf)
-- [Demo Video](sfddsf)
+- [GitHub Repository](https://github.com/Seicram/Note-Taker)
+- [Deployed Application](https://note-taker-smith.herokuapp.com/notes)
 
 ## License
 
